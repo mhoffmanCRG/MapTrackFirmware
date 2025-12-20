@@ -1,8 +1,4 @@
-#ifndef GNSS_H
-#define GNSS_H
-
+#pragma once
 void gnssSetup();
 void gnssLoop();
 uint32_t getChipId();
-
-#endif

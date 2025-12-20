@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-// struct packetStruct {
+// struct locationStruct {
 //     volatile          short int type = 0; //2
 //     volatile          byte id; //1
 //     volatile          byte packet; //1
@@ -15,10 +15,10 @@ typedef struct {
   uint8_t b[3];   // MSB first
 } uint24_t;
 
-struct __attribute__((packed)) packetStruct {
-  uint32_t senderId;   // 4 bytes (aligned naturally)
-  uint8_t packetType;  // 1 byte
-  uint8_t packetCnt;   // 1 byte
+struct __attribute__((packed)) locationStruct {
+  int32_t senderId;   // 4 bytes (aligned naturally)
+  int8_t packetType;  // 1 byte
+  int8_t packetCnt;   // 1 byte
 
   int32_t lat; 
   int32_t lng; 
@@ -39,4 +39,4 @@ struct __attribute__((packed)) packetStruct {
 };
 
 
-extern packetStruct p;
+extern locationStruct p;

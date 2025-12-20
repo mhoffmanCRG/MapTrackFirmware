@@ -6,10 +6,16 @@
 #include "gnss.h"
 #include "radio.h"
 #include "pins.h"
+#include "ble.h"
 
-packetStruct p;
+locationStruct p;
 
 void setup() {
+
+  uint64_t chipId = ESP.getEfuseMac() ;
+  uint32_t chipId32 =  chipId >> 32;
+
+  p.senderId = chipId32;
 
   pinMode(LED, OUTPUT);
 
@@ -51,6 +57,7 @@ void setup() {
   gnssSetup();
   //accSetup();
   radioSetup();
+  bleSetup();
 
     // On first boot, enable ADXL345 wakeup
     esp_sleep_enable_timer_wakeup(300 * 1000000ULL); // 30 sec

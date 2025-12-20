@@ -1,5 +1,4 @@
-#ifndef ACC_H
-#define ACC_H
+#pragma once
 
 void accSetup();
 void togglePinTest(char pin);
@@ -8,5 +7,3 @@ void accDisableInterrupts();
 void WireSetBit(int addr, uint8_t bit, bool val);
 void gnssSleep();
 void gnsssWake();
-
-#endif

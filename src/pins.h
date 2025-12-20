@@ -1,5 +1,4 @@
-#ifndef PINS_H
-#define PINS_H
+#pragma once
 
     #define ADXL_INT 2    // Must be RTC-capable pin for wakeup // Shared with SS
     #define SDA_PIN 0
@@ -17,4 +16,3 @@
     #define GNSS_PULSE 5
 
     #define LED 8
-#endif

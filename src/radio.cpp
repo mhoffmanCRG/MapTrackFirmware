@@ -6,10 +6,19 @@
 #include "pins.h"
 #include "packet.h"
 #include "esp_crc.h"
+#include "ble.h"
 
 SX1262 radio = new Module(SS, DIO1, RST, BUSY, SPI);
 
 int cnt=0;
+
+
+volatile bool receivedFlag = false;
+
+void dataReceived(void) {
+  Serial.println("Data received...");
+  receivedFlag = true;
+}
 
 void radioSetup() {
   Serial.begin(115200);
@@ -34,10 +43,13 @@ const float rv = 0.0;//1.6; //TCXO reference voltage: 1.6 V (SX126x module with 
 
 int state = radio.begin(ch[0], bw, sf, cr, sw, po, pe, rv, false);
 
+radio.setDio1Action(dataReceived);
+
 //radio.setCurrentLimit(140);
 radio.setDio2AsRfSwitch(true);
 //radio.explicitHeader();
 radio.setCRC(2);
+radio.startReceive();
 
   
   if (state == RADIOLIB_ERR_NONE) {
@@ -60,13 +72,50 @@ radio.setCRC(2);
 
 }
 
+bool checkCRC(const locationStruct& p) {
+  // Recalculate CRC over struct EXCLUDING crc field
+  uint8_t packetData[sizeof(locationStruct) - sizeof(uint32_t)];
 
+  memcpy(packetData, &p, sizeof(packetData));
+
+  uint32_t calculated =
+      esp_crc32_le(0x00, packetData, sizeof(packetData));
+
+  return (calculated == p.crc);
+}
+
+void processPacket() {
+  receivedFlag = false;
+  int len = radio.getPacketLength();
+
+  Serial.printf("PacketSize: %d\n", len);
+
+  if (len == sizeof(locationStruct)) {
+    Serial.println("locationStruct size");
+    locationStruct loc;
+    if (receiveStruct(radio, loc)) {
+      Serial.println("Valid locationStruct received!");
+      String locJSON = locationStructToJson(loc);
+      Serial.println(locJSON);
+      bleNotifyLoc(locJSON);
+    }
+
+  } else {
+    radio.startReceive();
+    return;
+  }
+  
+  radio.startReceive();
+}
 
 void radioLoop() {
   static unsigned long lastTxTime = 0;
   const unsigned long TX_INTERVAL = 10000; // 30 seconds
-
   unsigned long now = millis();
+
+  if(receivedFlag) {
+    processPacket();
+  }
 
   // Only transmit if 30 seconds have passed
   if (now - lastTxTime < TX_INTERVAL) {
@@ -74,46 +123,35 @@ void radioLoop() {
   }
 
   lastTxTime = now;
+  // p.packetCnt = p.packetCnt + 1;
 
   Serial.print(F("[SX1278] Transmitting packet ... "));
 
   // Calculate CRC
-  uint8_t packetData[sizeof(packetStruct)-4];
+  uint8_t packetData[sizeof(locationStruct)-4];
   memcpy(packetData, &p, sizeof(packetData));
   uint32_t crc = esp_crc32_le(0x00, packetData, sizeof(packetData));
   p.crc = crc;
   
 
   digitalWrite(LED, HIGH);
-  cnt++;
+  
   byte *charpointer = (byte*)&p;
   unsigned long txnow = millis();
   int state = radio.transmit(charpointer, sizeof(p));
   Serial.print("timeOnAir " );
   Serial.println( millis() - txnow);
   digitalWrite(LED, LOW);
-
-    //  StaticJsonDocument<128> doc;
-    //  doc["cnt"] = cnt;
-    //  doc["temp"] = 23.5;
-    //  doc["millis"] = millis();
-     
-    //  char buffer[128];
-    //  int len = serializeJson(doc, buffer, sizeof(buffer));
-     
-    //  int state = radio.transmit(buffer, len);
-     
-
+  delay(10);
+  radio.startReceive();
 
   if (state == RADIOLIB_ERR_NONE) {
     // the packet was successfully transmitted
-    Serial.println(F(" success!"));
 
     // print measured data rate
-    Serial.print(F("[SX1278] Datarate:\t"));
-    Serial.print(radio.getDataRate());
-    Serial.print(F(" bps"));
-  
+    // Serial.print(F("[SX1278] Datarate:\t"));
+    // Serial.print(radio.getDataRate());
+    // Serial.print(F(" bps"));
 
   } else if (state == RADIOLIB_ERR_PACKET_TOO_LONG) {
     // the supplied packet was longer than 256 bytes
@@ -127,10 +165,64 @@ void radioLoop() {
     // some other error occurred
     Serial.print(F("failed, code "));
     Serial.println(state);
-
   }
 
   // wait for a second before transmitting again
 //   delay(3000);
   
+}
+
+
+template<typename T, typename RadioType>
+bool receiveStruct(RadioType& radio, T& out) {
+  int len = radio.getPacketLength();
+
+  if (len != sizeof(T)) {
+    Serial.println("receiveStruct: len != sizeof(T)");
+    radio.startReceive();
+    return false;
+  }
+
+  uint8_t buffer[sizeof(T)];
+  int state = radio.readData(buffer, sizeof(buffer));
+  if (state != RADIOLIB_ERR_NONE) {
+    radio.startReceive();
+    return false;
+  }
+
+  T temp;
+  memcpy(&temp, buffer, sizeof(T));
+
+  uint8_t data[sizeof(T) - sizeof(uint32_t)];
+  memcpy(data, &temp, sizeof(data));
+  uint32_t crcCalc = esp_crc32_le(0x00, data, sizeof(data));
+
+  if (crcCalc != temp.crc) {
+    Serial.println("CRC failed");
+    radio.startReceive();
+    return false;
+  }
+
+  out = temp;
+  radio.startReceive();
+  return true;
+}
+
+String locationStructToJson(const locationStruct& p) {
+  JsonDocument doc;  // allocate 256 bytes on the heap
+
+  doc["id"]         = p.crc;
+  doc["senderId"]   = p.senderId;
+  doc["packetType"] = p.packetType;
+  doc["packetCnt"]  = p.packetCnt;
+  doc["lat"]        = p.lat / 10000000.0;
+  doc["lng"]        = p.lng / 10000000.0;
+  doc["speed"]      = p.speed;
+  doc["heading"]    = p.heading;
+  
+
+  String json;
+  serializeJson(doc, json);
+  Serial.println (json);
+  return json;
 }

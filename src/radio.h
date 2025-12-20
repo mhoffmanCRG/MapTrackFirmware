@@ -1,7 +1,12 @@
-#ifndef RADIO_H
-#define RADIO_H
+#pragma once
+
+#include "packet.h"
 
 void radioSetup();
 void radioLoop();
 
-#endif
+template<typename T, typename RadioType>
+bool receiveStruct(RadioType&, T&);
+
+String locationStructToJson(const locationStruct& p);
+

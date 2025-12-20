@@ -1,4 +1,3 @@
-
 #include <Arduino.h>
 #include <Wire.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h> 
@@ -6,6 +5,7 @@
 #include "gnss.h"
 #include "pins.h"
 #include "packet.h"
+#include "ble.h"
 
 SFE_UBLOX_GNSS myGNSS;
 char nmeaBuffer[100];
@@ -94,34 +94,18 @@ void gnssSetup()
   Serial.println(F("GNSS time pulse configured."));
 }
 
-uint24_t u32_to_u24(uint32_t v) {
-  uint24_t r;
-
-  // clamp to 24-bit range
-  if (v > 0xFFFFFF) v = 0xFFFFFF;
-
-  r.b[0] = (v >> 16) & 0xFF;
-  r.b[1] = (v >> 8)  & 0xFF;
-  r.b[2] = v & 0xFF;
-
-  return r;
-}
 
 void gnssLoop()
 {
   unsigned long start = millis();
   
-  while (millis() - start < 60000) {   // x/1000 seconds
+  while (millis() - start < 5000) {   // x/1000 seconds
     myGNSS.checkUblox(); // Process incoming data
 
     if (nmea.isValid())
     {
-      uint64_t chipId = ESP.getEfuseMac() ;
-      uint32_t chipId32 =  chipId >> 32;
 
-      p.senderId = chipId32;
-      p.packetType = 0;//cnt%256;
-      p.packetCnt = 0;
+      p.packetType = 1;
       p.lat = myGNSS.getLatitude();
       p.lng = myGNSS.getLongitude();
       p.speed = (uint8_t) myGNSS.getGroundSpeed() * 0.0036;
