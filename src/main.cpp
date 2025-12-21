@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 #include "packet.h"
 #include "esp_sleep.h"
 #include "acc.h" // ADXL345 setup and interrupt config
@@ -11,6 +13,7 @@
 locationStruct p;
 
 void setup() {
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // disable brown-out
 
   uint64_t chipId = ESP.getEfuseMac() ;
   uint32_t chipId32 =  chipId >> 32;

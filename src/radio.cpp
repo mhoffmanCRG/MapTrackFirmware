@@ -123,11 +123,13 @@ void radioLoop() {
   }
 
   lastTxTime = now;
-  // p.packetCnt = p.packetCnt + 1;
+  
 
   Serial.print(F("[SX1278] Transmitting packet ... "));
 
-  // Calculate CRC
+
+  // Calculate CRC and add to packetCnt
+  p.packetCnt = p.packetCnt + 1;
   uint8_t packetData[sizeof(locationStruct)-4];
   memcpy(packetData, &p, sizeof(packetData));
   uint32_t crc = esp_crc32_le(0x00, packetData, sizeof(packetData));
