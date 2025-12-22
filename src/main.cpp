@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include "esp_system.h"
+#include "esp_task_wdt.h"
+
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "packet.h"
@@ -11,14 +14,18 @@
 #include "ble.h"
 
 locationStruct p;
+int32_t senderId;
 
 void setup() {
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // disable brown-out
+  // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // disable brown-out
+  esp_task_wdt_init(5, true);   // 5s timeout
+  esp_task_wdt_add(NULL);       // Add loop ta
 
   uint64_t chipId = ESP.getEfuseMac() ;
   uint32_t chipId32 =  chipId >> 32;
 
   p.senderId = chipId32;
+  senderId = chipId32;
 
   pinMode(LED, OUTPUT);
 
@@ -79,5 +86,7 @@ void loop() {
   radioLoop();
   //deepSleep();
   delay(1000);
+  // Feed watchdog
+  esp_task_wdt_reset();
 }
 

@@ -40,3 +40,4 @@ struct __attribute__((packed)) locationStruct {
 
 
 extern locationStruct p;
+extern int32_t senderId;

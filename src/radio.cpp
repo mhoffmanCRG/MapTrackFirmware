@@ -13,6 +13,7 @@ SX1262 radio = new Module(SS, DIO1, RST, BUSY, SPI);
 int cnt=0;
 
 
+
 volatile bool receivedFlag = false;
 
 void dataReceived(void) {
@@ -221,6 +222,7 @@ String locationStructToJson(const locationStruct& p) {
   doc["lng"]        = p.lng / 10000000.0;
   doc["speed"]      = p.speed;
   doc["heading"]    = p.heading;
+  doc["linkedDevice"]  = senderId == p.senderId ? true : false ;
   
 
   String json;

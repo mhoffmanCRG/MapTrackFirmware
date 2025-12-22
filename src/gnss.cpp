@@ -2,6 +2,8 @@
 #include <Wire.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h> 
 #include <MicroNMEA.h> 
+#include "esp_system.h"
+#include "esp_task_wdt.h"
 #include "gnss.h"
 #include "pins.h"
 #include "packet.h"
@@ -142,6 +144,7 @@ void gnssLoop()
       delay(20);
       digitalWrite(LED, LOW);
       delay(1000);
+      esp_task_wdt_reset();
     }
   }
 }
