@@ -27,6 +27,8 @@ void setup() {
   p.senderId = chipId32;
   senderId = chipId32;
 
+  randomSeed(micros() ^ (unsigned long)ESP.getEfuseMac());
+
   pinMode(LED, OUTPUT);
 
   digitalWrite(LED, HIGH);

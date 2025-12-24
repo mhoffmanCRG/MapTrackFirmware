@@ -36,17 +36,16 @@ const float bw = 125.0;  //Bandwidth: 125.0 kHz (dual-sideband)
 const int sf = 10;//Spreading factor: 12
 const int cr = 7;//Coding rate: 4/7
 const int sw = RADIOLIB_SX126X_SYNC_WORD_PUBLIC;//Sync word: SX126X_SYNC_WORD_PRIVATE (0x12)
-const int po = 22;//Output power: 10 dBm
-const int pe = 8;//Preamble length: 8 symbols
+const int po = 22;//Output power: 10 dBm max 22
+const int pe = 12;//Preamble length: 8 symbols
 const float rv = 0.0;//1.6; //TCXO reference voltage: 1.6 V (SX126x module with TCXO)
-//LDO regulator mode: disabled (SX126x module with DC-DC power supply)
 
 
-int state = radio.begin(ch[0], bw, sf, cr, sw, po, pe, rv, false);
+int state = radio.begin(ch[7], bw, sf, cr, sw, po, pe, rv, false);
 
 radio.setDio1Action(dataReceived);
 
-//radio.setCurrentLimit(140);
+// radio.setCurrentLimit(50);
 radio.setDio2AsRfSwitch(true);
 //radio.explicitHeader();
 radio.setCRC(2);
@@ -111,7 +110,7 @@ void processPacket() {
 
 void radioLoop() {
   static unsigned long lastTxTime = 0;
-  const unsigned long TX_INTERVAL = 10000; // 30 seconds
+  static unsigned long txIntervalMs = 10000;
   unsigned long now = millis();
 
   if(receivedFlag) {
@@ -119,11 +118,12 @@ void radioLoop() {
   }
 
   // Only transmit if 30 seconds have passed
-  if (now - lastTxTime < TX_INTERVAL) {
+  if (now - lastTxTime < txIntervalMs) {
     return;
   }
 
   lastTxTime = now;
+  txIntervalMs = random(12000, 18000); // randomize next interval between 12-18 seconds
   
 
   Serial.print(F("[SX1278] Transmitting packet ... "));
@@ -214,19 +214,21 @@ bool receiveStruct(RadioType& radio, T& out) {
 String locationStructToJson(const locationStruct& p) {
   JsonDocument doc;  // allocate 256 bytes on the heap
 
-  doc["id"]         = p.crc;
-  doc["senderId"]   = p.senderId;
-  doc["packetType"] = p.packetType;
-  doc["packetCnt"]  = p.packetCnt;
-  doc["lat"]        = p.lat / 10000000.0;
-  doc["lng"]        = p.lng / 10000000.0;
-  doc["speed"]      = p.speed;
-  doc["heading"]    = p.heading;
-  doc["linkedDevice"]  = senderId == p.senderId ? true : false ;
+  doc["id"]           = p.crc;
+  doc["senderId"]     = p.senderId;
+  doc["packetType"]   = p.packetType;
+  doc["packetCnt"]    = p.packetCnt;
+  doc["latitude"]     = p.lat / 10000000.0;
+  doc["longitude"]    = p.lng / 10000000.0;
+  doc["speed"]        = p.speed;
+  doc["heading"]      = p.heading;
+  doc["linkedDevice"] = senderId == p.senderId ? true : false ;
+  doc["type"]         = "remoteLoc";
   
-
+  
   String json;
   serializeJson(doc, json);
   Serial.println (json);
   return json;
 }
+
