@@ -16,16 +16,16 @@ typedef struct {
 } uint24_t;
 
 struct __attribute__((packed)) locationStruct {
-  int32_t senderId;   // 4 bytes (aligned naturally)
-  int8_t packetType;  // 1 byte
-  int8_t packetCnt;   // 1 byte
+  uint32_t senderId;   // 4 bytes (aligned naturally)
+  uint8_t packetType;  // 1 byte
+  uint8_t packetCnt;   // 1 byte
 
   int32_t lat; 
   int32_t lng; 
   int8_t speed;
   int8_t heading;
 
-  int32_t crc;       // 4 bytes (aligned naturally)
+  uint32_t crc;       // 4 bytes (aligned naturally)
 
   // uint8_t powerOn : 1; // 1-bit boolean
   // uint8_t coolerOn : 1; // 1-bit boolean

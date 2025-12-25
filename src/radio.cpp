@@ -91,11 +91,13 @@ void processPacket() {
   Serial.printf("PacketSize: %d\n", len);
 
   if (len == sizeof(locationStruct)) {
-    Serial.println("locationStruct size");
     locationStruct loc;
     if (receiveStruct(radio, loc)) {
-      Serial.println("Valid locationStruct received!");
-      String locJSON = locationStructToJson(loc);
+      // Serial.println("Valid locationStruct received!");
+      String locJSON = locationStructToJson(loc, true);
+      bleNotifyLoc(locJSON);
+    } else {
+      String locJSON = locationStructToJson(loc, false);
       Serial.println(locJSON);
       bleNotifyLoc(locJSON);
     }
@@ -200,18 +202,17 @@ bool receiveStruct(RadioType& radio, T& out) {
   memcpy(data, &temp, sizeof(data));
   uint32_t crcCalc = esp_crc32_le(0x00, data, sizeof(data));
 
-  if (crcCalc != temp.crc) {
-    Serial.println("CRC failed");
-    radio.startReceive();
-    return false;
-  }
-
   out = temp;
   radio.startReceive();
+
+  if (crcCalc != temp.crc) {
+    Serial.println("CRC failed");
+    return false;
+  }
   return true;
 }
 
-String locationStructToJson(const locationStruct& p) {
+String locationStructToJson(const locationStruct& p, bool isValid) {
   JsonDocument doc;  // allocate 256 bytes on the heap
 
   doc["id"]           = p.crc;
@@ -224,6 +225,8 @@ String locationStructToJson(const locationStruct& p) {
   doc["heading"]      = p.heading;
   doc["linkedDevice"] = senderId == p.senderId ? true : false ;
   doc["type"]         = "remoteLoc";
+  doc["valid"]        = isValid;
+  doc["version"]      = 2512250800; // YYYYMMDDHH
   
   
   String json;

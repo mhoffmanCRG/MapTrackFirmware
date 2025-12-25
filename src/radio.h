@@ -8,5 +8,5 @@ void radioLoop();
 template<typename T, typename RadioType>
 bool receiveStruct(RadioType&, T&);
 
-String locationStructToJson(const locationStruct& p);
+String locationStructToJson(const locationStruct& p, bool isValid);
 
