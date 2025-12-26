@@ -33,7 +33,7 @@ class MyWriteCallbacks : public NimBLECharacteristicCallbacks {
             if (!err) {
                 if (doc.containsKey("led")) {
                     bool ledState = doc["led"];
-                    digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
+                    // digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
                     Serial.printf("LED set to: %s\n", ledState ? "ON" : "OFF");
                 }
             } else {
@@ -45,7 +45,7 @@ class MyWriteCallbacks : public NimBLECharacteristicCallbacks {
 
 void bleSetup() {
     Serial.begin(115200);
-    pinMode(LED_BUILTIN, OUTPUT);
+    // pinMode(LED_BUILTIN, OUTPUT);
 
     // Initialize NimBLE
     NimBLEDevice::init("ESP32C3_JSON");

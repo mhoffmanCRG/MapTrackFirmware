@@ -12,13 +12,16 @@
 #include "radio.h"
 #include "pins.h"
 #include "ble.h"
+#include "util.h"
 
 locationStruct p;
 int32_t senderId;
 
+
+
 void setup() {
   // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // disable brown-out
-  esp_task_wdt_init(5, true);   // 5s timeout
+  esp_task_wdt_init(10, true);   // 5s timeout
   esp_task_wdt_add(NULL);       // Add loop ta
 
   uint64_t chipId = ESP.getEfuseMac() ;
@@ -29,11 +32,10 @@ void setup() {
 
   randomSeed(micros() ^ (unsigned long)ESP.getEfuseMac());
 
+  delay(1000); // wait for serial to initialize
   pinMode(LED, OUTPUT);
 
-  digitalWrite(LED, HIGH);
-  delay(100);
-  digitalWrite(LED, LOW);
+  blink(3,0); // Indicate startup
   
   
 
@@ -87,8 +89,11 @@ void loop() {
   gnssLoop();
   radioLoop();
   //deepSleep();
-  delay(1000);
+  delay(100);
   // Feed watchdog
   esp_task_wdt_reset();
 }
+
+
+
 

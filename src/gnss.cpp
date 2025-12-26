@@ -8,6 +8,7 @@
 #include "pins.h"
 #include "packet.h"
 #include "ble.h"
+#include "util.h"
 
 SFE_UBLOX_GNSS myGNSS;
 char nmeaBuffer[100];
@@ -100,10 +101,9 @@ void gnssSetup()
 void gnssLoop()
 {
   unsigned long start = millis();
-  
+
   while (millis() - start < 5000) {   // x/1000 seconds
     myGNSS.checkUblox(); // Process incoming data
-
     if (nmea.isValid())
     {
 
@@ -124,9 +124,7 @@ void gnssLoop()
 
       nmea.clear();
 
-      digitalWrite(LED, HIGH);
-      delay(20);
-      digitalWrite(LED, LOW);
+      blink(0,1); // Indicate valid fix
 
       return;
     }
@@ -134,19 +132,12 @@ void gnssLoop()
     {
       Serial.print("Waiting for fresh data: ");
       Serial.println((int)((millis() - start)/1000));
-      
-    
-      digitalWrite(LED, HIGH);
-      delay(20);
-      digitalWrite(LED, LOW);
-      delay(100);
-      digitalWrite(LED, HIGH);
-      delay(20);
-      digitalWrite(LED, LOW);
       delay(1000);
+      
       esp_task_wdt_reset();
     }
   }
+  blink(0,2); // Indicate no fix
 }
 
 // Pass incoming NMEA characters to MicroNMEA

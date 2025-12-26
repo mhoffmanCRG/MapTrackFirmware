@@ -7,6 +7,8 @@
 #include "packet.h"
 #include "esp_crc.h"
 #include "ble.h"
+#include "util.h"
+
 
 SX1262 radio = new Module(SS, DIO1, RST, BUSY, SPI);
 
@@ -33,7 +35,7 @@ void radioSetup() {
 const float ch[] = {868.1, 868.3, 868.5, 867.1, 867.3, 867.5, 867.7, 867.9};
 //Carrier frequency: 434.0 MHz
 const float bw = 125.0;  //Bandwidth: 125.0 kHz (dual-sideband)
-const int sf = 10;//Spreading factor: 12
+const int sf = 11;//Spreading factor: 12
 const int cr = 7;//Coding rate: 4/7
 const int sw = RADIOLIB_SX126X_SYNC_WORD_PUBLIC;//Sync word: SX126X_SYNC_WORD_PRIVATE (0x12)
 const int po = 22;//Output power: 10 dBm max 22
@@ -147,7 +149,7 @@ void radioLoop() {
   Serial.print("timeOnAir " );
   Serial.println( millis() - txnow);
   digitalWrite(LED, LOW);
-  delay(10);
+  delay(100);
   radio.startReceive();
 
   if (state == RADIOLIB_ERR_NONE) {
@@ -161,15 +163,19 @@ void radioLoop() {
   } else if (state == RADIOLIB_ERR_PACKET_TOO_LONG) {
     // the supplied packet was longer than 256 bytes
     Serial.println(F("too long!"));
+    blink(2,4);
+    
 
   } else if (state == RADIOLIB_ERR_TX_TIMEOUT) {
     // timeout occurred while transmitting packet
     Serial.println(F("timeout!"));
+    blink(2,3);
 
   } else {
     // some other error occurred
     Serial.print(F("failed, code "));
     Serial.println(state);
+    blink(2,5);    
   }
 
   // wait for a second before transmitting again
@@ -226,7 +232,7 @@ String locationStructToJson(const locationStruct& p, bool isValid) {
   doc["linkedDevice"] = senderId == p.senderId ? true : false ;
   doc["type"]         = "remoteLoc";
   doc["valid"]        = isValid;
-  doc["version"]      = 2512250800; // YYYYMMDDHH
+  doc["version"]      = 2512251000; // YYYYMMDDHH
   
   
   String json;
