@@ -20,4 +20,9 @@ struct __attribute__((packed)) locationStruct {
 
 
 extern locationStruct p;
-extern int32_t senderId;
+volatile extern int32_t senderId;
+volatile extern int32_t lat;
+volatile extern int32_t lng;
+volatile extern uint8_t speed;
+volatile extern uint8_t heading;
+volatile extern uint8_t packetCnt;

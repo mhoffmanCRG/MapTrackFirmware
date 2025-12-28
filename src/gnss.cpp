@@ -104,23 +104,38 @@ void gnssLoop()
 
   while (millis() - start < 5000) {   // x/1000 seconds
     myGNSS.checkUblox(); // Process incoming data
-    if (nmea.isValid())
-    {
+    if (nmea.isValid()) {
 
-      p.packetType = 1;
-      p.lat = myGNSS.getLatitude();
-      p.lng = myGNSS.getLongitude();
-      p.speed = (uint8_t) myGNSS.getGroundSpeed() * 0.0036;
-      p.heading = myGNSS.getHeading()/100000/2;
-  
+      lng = myGNSS.getLongitude();
+      lat = myGNSS.getLatitude();
+      speed = (uint8_t)(myGNSS.getGroundSpeed() * 0.0036);
+      heading = myGNSS.getHeading()/100000/2; 
 
-      long latitude_mdeg = nmea.getLatitude();
-      long longitude_mdeg = nmea.getLongitude();
+      // p.packetType = 1;
+      // p.lat = myGNSS.getLatitude();
+      // p.lng = myGNSS.getLongitude();
+      // p.speed = (uint8_t)(myGNSS.getGroundSpeed() * 0.0036);
+      // p.heading = myGNSS.getHeading()/100000/2;
 
-      Serial.print("Latitude (deg): ");
-      Serial.print(latitude_mdeg / 1000000.0, 6);
-      Serial.print("  Longitude (deg): ");
-      Serial.println(longitude_mdeg / 1000000.0, 6);
+      // locationStruct tmp;
+      //   tmp.senderId = getChipId();
+      //   tmp.packetType = 1;
+      //   tmp.lat = myGNSS.getLatitude();
+      //   tmp.lng = myGNSS.getLongitude();
+      //   tmp.speed = (uint8_t)(myGNSS.getGroundSpeed() * 0.0036);
+      //   tmp.heading = myGNSS.getHeading() / 100000 / 2;
+
+      //   // atomic commit
+      //   p = tmp;
+
+
+      // long latitude_mdeg = nmea.getLatitude();
+      // long longitude_mdeg = nmea.getLongitude();
+
+      // Serial.print("Latitude (deg): ");
+      // Serial.print(latitude_mdeg / 1000000.0, 6);
+      // Serial.print("  Longitude (deg): ");
+      // Serial.println(longitude_mdeg / 1000000.0, 6);
 
       nmea.clear();
 
@@ -130,13 +145,13 @@ void gnssLoop()
     }
     else
     {
-      Serial.print("Waiting for fresh data: ");
-      Serial.println((int)((millis() - start)/1000));
-      delay(1000);
+      delay(500);
       
       esp_task_wdt_reset();
     }
   }
+    Serial.print("Waiting for fresh data: ");
+    Serial.println((int)((millis() - start)/1000));
   blink(0,2); // Indicate no fix
 }
 
@@ -144,12 +159,4 @@ void gnssLoop()
 void SFE_UBLOX_GNSS::processNMEA(char incoming)
 {
   nmea.process(incoming);
-}
-
-uint32_t getChipId(){
-  uint32_t chipId = 0;
-  for(int i=0; i<17; i=i+8) {
-    chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
-  }
-return chipId;
 }

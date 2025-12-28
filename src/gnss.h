@@ -1,4 +1,4 @@
 #pragma once
 void gnssSetup();
 void gnssLoop();
-uint32_t getChipId();
+// uint32_t getChipId();

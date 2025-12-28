@@ -5,8 +5,8 @@
 void radioSetup();
 void radioLoop();
 
-template<typename T, typename RadioType>
-bool receiveStruct(RadioType&, T&);
 
-String locationStructToJson(const locationStruct& p, bool isValid);
+bool checkCRC(locationStruct p);
+
+String locationStructToJson(const locationStruct& p, bool isValid, float rssi, float snr);
 

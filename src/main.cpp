@@ -15,28 +15,28 @@
 #include "util.h"
 
 locationStruct p;
-int32_t senderId;
-
-
+volatile int32_t senderId;
+volatile int32_t lat;
+volatile int32_t lng;
+volatile uint8_t speed;
+volatile uint8_t heading;
+volatile uint8_t packetCnt = 0;
 
 void setup() {
   // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // disable brown-out
   esp_task_wdt_init(10, true);   // 5s timeout
   esp_task_wdt_add(NULL);       // Add loop ta
 
-  uint64_t chipId = ESP.getEfuseMac() ;
-  uint32_t chipId32 =  chipId >> 32;
 
-  p.senderId = chipId32;
-  senderId = chipId32;
+  p.senderId = getChipId();
+  senderId = getChipId();
 
   randomSeed(micros() ^ (unsigned long)ESP.getEfuseMac());
 
-  delay(1000); // wait for serial to initialize
+  delay(100); // wait for serial to initialize
   pinMode(LED, OUTPUT);
 
   blink(3,0); // Indicate startup
-  
   
 
   accDisableInterrupts();
