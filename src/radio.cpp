@@ -12,14 +12,11 @@
 SX1262 radio = new Module(SS, DIO1, RST, BUSY, SPI);
 
 int cnt=0;
+const int16_t txIntBase = 7500;
+const int16_t txIntOffset = 5000;
 
 volatile bool receivedFlag = false;
 
-void dataReceived(void) {
-  // Serial.println("Data received...");
-  Serial.print("~");
-  receivedFlag = true;
-}
 
 void radioSetup() {
   Serial.begin(115200);
@@ -31,14 +28,14 @@ void radioSetup() {
 const float ch[] = {868.1, 868.3, 868.5, 867.1, 867.3, 867.5, 867.7, 867.9};
 //Carrier frequency: 434.0 MHz
 const float bw = 125.0;  //Bandwidth: 125.0 kHz (dual-sideband)
-const int sf = 11;//Spreading factor: 12
-const int cr = 5;//Coding rate: 4/7
+const int sf = 9;//Spreading factor: 12
+const int cr = 8;//Coding rate: 4/7
 const int sw = RADIOLIB_SX126X_SYNC_WORD_PUBLIC;//Sync word: SX126X_SYNC_WORD_PRIVATE (0x12)
-const int po = 10;//Output power: 10 dBm max 22
+const int po = 22;//Output power: 10 dBm max 22
 const int pe = 12;//Preamble length: 8 symbols
 const float rv = 0.0;//1.6; //TCXO reference voltage: 1.6 V (SX126x module with TCXO)
 
-int state = radio.begin(ch[7], bw, sf, cr, sw, po, pe, rv, false);
+int state = radio.begin(ch[0], bw, sf, cr, sw, po, pe, rv, false);
 
 radio.setDio1Action(dataReceived);
 
@@ -56,6 +53,11 @@ radio.startReceive();
   } 
 }
 
+void dataReceived(void) {
+  // Serial.println("Data received...");
+  // Serial.print("~");
+  receivedFlag = true;
+}
 
 
 void processPacket() {
@@ -103,7 +105,7 @@ bool checkCRC(locationStruct packet) {
 
 void radioLoop() {
   static unsigned long lastTxTime = 0;
-  static unsigned long txIntervalMs = 1000;
+  static unsigned long txIntervalMs = 5000;
   unsigned long now = millis();
 
   if(receivedFlag) {
@@ -120,11 +122,11 @@ void radioLoop() {
   }
 
   lastTxTime = now;
-  txIntervalMs = random(12000, 18000); // randomize next interval between 12-18 seconds
+  txIntervalMs = random(7500, 12500); // randomize next interval between 12-18 seconds
   
 
   Serial.print(F(">"));
-
+  Serial.print(txIntervalMs);
 
   // // Calculate CRC and add to packetCnt
   // p.senderId = getChipId();
@@ -169,11 +171,12 @@ void radioLoop() {
     uint32_t crc = esp_crc32_le(0x00, packetData, sizeof(packetData));
     tx.crc = crc;
 
+    unsigned long txnow = millis();
     digitalWrite(LED, HIGH);
-
     int state = radio.transmit((uint8_t*)&tx, sizeof(tx));
-
     digitalWrite(LED, LOW);
+    Serial.print(" timeOnAir " );
+    Serial.println( millis() - txnow);
 
     if (state == RADIOLIB_ERR_NONE) {
       p.packetCnt = tx.packetCnt;   // commit counter only
@@ -235,6 +238,7 @@ String locationStructToJson(const locationStruct& p, bool isValid, float rssi, f
   
   String json;
   serializeJson(doc, json);
+  Serial.println("");
   Serial.println (json);
   return json;
 }

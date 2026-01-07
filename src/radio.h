@@ -4,6 +4,7 @@
 
 void radioSetup();
 void radioLoop();
+void dataReceived(void);
 
 
 bool checkCRC(locationStruct p);
